@@ -1,0 +1,16 @@
+
+{
+  "packagingVersion": "4.0",
+  "upgradesFrom": ["0.1.0"],
+  "downgradesTo": ["0.1.0"],
+  "minDcosReleaseVersion": "1.13",
+  "name": "jupyterlab",
+  "version": "0.1.0",
+  "maintainer": "MaibornWolff",
+  "description": "Jupyterlab for DC/OS with HDFS kerberos support",
+  "selected": false,
+  "framework": false,
+  "tags": ["jupyterlab", "kerberos", "hdfs", "s3"],
+  "postInstallNotes": "DC/OS Jupyterlab is being installed!",
+  "postUninstallNotes": "DC/OS Jupyterlab is being uninstalled."
+}

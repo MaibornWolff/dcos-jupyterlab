@@ -1,0 +1,15 @@
+
+{
+  "assets": {
+    "container": {
+      "docker": {
+        "jupyterlab": "ghcr.io/maibornwolff/jupyterlab:%(package-version)s"
+      }
+    }
+  },
+  "images": {
+    "icon-small": "https://downloads.mesosphere.com/jupyter/assets/jupyter-logo.svg",
+    "icon-medium": "https://downloads.mesosphere.com/jupyter/assets/jupyter-logo.svg",
+    "icon-large": "https://downloads.mesosphere.com/jupyter/assets/jupyter-logo.svg"
+  }
+}

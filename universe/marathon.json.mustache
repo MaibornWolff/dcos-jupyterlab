@@ -1,0 +1,224 @@
+{
+    "id": "{{service.name}}",
+    "instances": 1,
+    "cpus": {{service.cpus}},
+    "mem": {{service.mem}},
+    "disk": 0,
+    "gpus": 0,
+    "user": "{{service.user}}",
+    "role": "{{service.role}}",
+    {{#service.placement_constraint}}
+    "constraints": {{{service.placement_constraint}}},
+    {{/service.placement_constraint}}
+    "container": {
+        "type": "MESOS",
+        "docker": {
+            "forcePullImage": false,
+            "image": "{{resource.assets.container.docker.jupyterlab}}",
+            "parameters": [],
+            "privileged": false
+        },
+        {{#service.virtual_network_enabled}}
+        "portMappings": [
+            {
+                "containerPort": 8888,
+                "hostPort": 0,
+                "protocol": "tcp",
+                "name": "juypter"
+            },
+            {
+                "containerPort": 7077,
+                "protocol": "tcp",
+                "name": "sparkdriver"
+            },
+            {
+                "containerPort": 4040,
+                "protocol": "tcp",
+                "name": "sparkui"
+            }
+        ],
+        {{/service.virtual_network_enabled}}
+        "volumes": [
+            {{#jupyterlab.kerberos.enabled}}
+            {
+                "containerPath": "hdfs-keytab",
+                "secret": "keytab"
+            }
+            {{/jupyterlab.kerberos.enabled}}
+            {{#service.storage.local.enabled}}
+            {{#jupyterlab.kerberos.enabled}},{{/jupyterlab.kerberos.enabled}}
+            {
+                "containerPath": "work",
+                "mode": "RW",
+                "persistent": {
+                    "type": "root",
+                    "size": {{service.storage.local.volume_size}},
+                    "constraints": []
+                }
+            }
+            {{/service.storage.local.enabled}}
+            {{#service.storage.host_path.enabled}}
+            {{#jupyterlab.kerberos.enabled}},{{/jupyterlab.kerberos.enabled}}
+            {
+                "containerPath": "work",
+                "hostPath": "{{service.storage.host_path.path}}",
+                "mode": "RW"
+            }
+            {{/service.storage.host_path.enabled}}
+        ]
+    },
+    {{^service.virtual_network_enabled}}
+    "portDefinitions": [
+        {
+            "port": 0,
+            "protocol": "tcp",
+            "name": "juypter"
+        },
+        {
+            "port": 0,
+            "protocol": "tcp",
+            "name": "sparkdriver"
+        },
+        {
+            "port": 0,
+            "protocol": "tcp",
+            "name": "sparkui"
+        }
+    ],
+    {{/service.virtual_network_enabled}}
+    "env": {
+        "PACKAGE_NAME": "jupyterlab",
+        "PACKAGE_VERSION": "%(package-version)s",
+        "PACKAGE_BUILD_TIME_EPOCH_MS": "%(time_epoch_ms)s",
+        "PACKAGE_BUILD_TIME_STR": "%(time_str)s",
+        {{#service.service_account}}
+        "DCOS_SERVICE_ACCOUNT_CREDENTIAL": {
+            "secret": "serviceaccount"
+        },
+        "MESOS_PRINCIPAL": "{{service.service_account}}",
+        {{/service.service_account}}
+        "LD_LIBRARY_PATH": "/opt/mesosphere/libmesos-bundle/lib",
+        "JUPYTER_ENABLE_LAB": "true",
+        "MESOS_ROLE": "{{service.role}}",
+        {{#jupyterlab.hdfs.enabled}}
+        "HDFS_URL": "{{jupyterlab.hdfs.config_url}}",
+        {{/jupyterlab.hdfs.enabled}}
+        "SPARK_USER": "{{service.user}}",
+        "SPARK_APP_NAME": "{{service.name}}",
+        "SPARK_DRIVER_CORES": "{{jupyterlab.spark.driver_cores}}",
+        "SPARK_DRIVER_MEMORY": "{{jupyterlab.spark.driver_memory}}",
+        "SPARK_EXECUTOR_CORES": "{{jupyterlab.spark.executor_cores}}",
+        "SPARK_EXECUTOR_MEMORY": "{{jupyterlab.spark.executor_memory}}",
+        "SPARK_TOTAL_EXECUTOR_CORES": "{{jupyterlab.spark.cores_max}}",
+        "SPARK_DRIVER_JAVA_OPTIONS": "{{jupyterlab.spark.driver_extra_java_options}}",
+        "SPARK_EXECUTOR_JAVA_OPTIONS": "{{jupyterlab.spark.executor_extra_java_options}}",
+        "SPARK_CONF": "{{jupyterlab.spark.extra_options}}",
+        {{#jupyterlab.kerberos.enabled}}
+        "KERBEROS_PRINCIPAL": "{{jupyterlab.kerberos.principal}}",
+        "KERBEROS_KEYTAB_SECRET": "{{jupyterlab.kerberos.keytab_secret}}",
+        "KERBEROS_KEYTAB_NAME": "hdfs-keytab",
+        "KRB5_CONF_BASE64": "{{jupyterlab.kerberos.krb5conf_base64}}",
+        {{/jupyterlab.kerberos.enabled}}
+        {{#jupyterlab.s3.enabled}}
+        "S3_ENDPOINT": "{{jupyterlab.s3.endpoint}}",
+        "S3_ACCESS_KEY": "{{jupyterlab.s3.access_key}}",
+        "S3_SECRET_KEY": "{{jupyterlab.s3.secret_key}}",
+        {{/jupyterlab.s3.enabled}}
+        {{#jupyterlab.git.enabled}}
+        "GIT_REPO_URL": "{{jupyterlab.git.repo_url}}",
+        "GIT_USER_NAME": "{{jupyterlab.git.user_name}}",
+        "GIT_USER_EMAIL": "{{jupyterlab.git.user_email}}",
+        {{/jupyterlab.git.enabled}}
+        "SPARK_EXECUTOR_DOCKER_IMAGE": "{{resource.assets.container.docker.jupyterlab}}",
+        "JUPYTER_PASSWORD": "{{jupyterlab.password}}",
+        {{#service.base_url}}
+        "JUPYTER_BASE_URL": "{{service.base_url}}",
+        {{/service.base_url}}
+        "GEN_CERT": "{{service.enable_ssl}}"
+    },
+    "labels": {
+        {{#service.marathonlb.enabled}}
+        "HAPROXY_GROUP": "external",
+        "HAPROXY_0_ENABLED": "true",
+        "HAPROXY_0_REDIRECT_TO_HTTPS": "{{service.marathonlb.redirect_to_https}}",
+        {{#service.enable_ssl}}
+        "HAPROXY_0_BACKEND_SERVER_OPTIONS": "  server {serverName} {host_ipv4}:{port} id {serverId}{cookieOptions}{healthCheckOptions}{otherOptions} ssl verify none\n",
+        {{/service.enable_ssl}}
+        {{#service.base_url}}
+        "HAPROXY_0_PATH": "{{service.base_url}}",
+        {{/service.base_url}}
+        "HAPROXY_0_VHOST": "{{service.marathonlb.hostname}}"
+        {{/service.marathonlb.enabled}}
+    },
+    "fetch": [
+        {{#jupyterlab.hdfs.enabled}}
+        {
+            "uri": "{{jupyterlab.hdfs.config_url}}/hdfs-site.xml",
+            "extract": false,
+            "cache": false,
+            "executable": false
+        },
+        {
+            "uri": "{{jupyterlab.hdfs.config_url}}/core-site.xml",
+            "extract": false,
+            "cache": false,
+            "executable": false
+        }
+        {{/jupyterlab.hdfs.enabled}}
+    ],
+    "secrets": {
+        {{#jupyterlab.kerberos.enabled}}
+        "keytab": {
+            "source": "{{jupyterlab.kerberos.keytab_secret}}"
+        },
+        {{/jupyterlab.kerberos.enabled}}
+        {{#service.service_account}}
+        "serviceaccount": {
+            "source": "{{service.service_account_secret}}"
+        }
+        {{/service.service_account}}
+    },
+    "networks": [
+        {{#service.virtual_network_enabled}}
+        {
+            "name": "{{service.virtual_network_name}}",
+            "mode": "container"
+        }
+        {{/service.virtual_network_enabled}}
+        {{^service.virtual_network_enabled}}
+        {
+            "mode": "host"
+        }
+        {{/service.virtual_network_enabled}}
+    ],
+    "healthChecks": [
+        {
+            "delaySeconds": 15,
+            "gracePeriodSeconds": 60,
+            "intervalSeconds": 20,
+            "ipProtocol": "IPv4",
+            "maxConsecutiveFailures": 6,
+            {{#service.base_url}}
+            "path": "{{service.base_url}}",
+            {{/service.base_url}}
+            {{^service.base_url}}
+            "path": "/",
+            {{/service.base_url}}
+            "portIndex": 0,
+            {{#service.enable_ssl}}
+            "protocol": "MESOS_HTTPS",
+            {{/service.enable_ssl}}
+            {{^service.enable_ssl}}
+            "protocol": "MESOS_HTTP",
+            {{/service.enable_ssl}}
+            "timeoutSeconds": 5
+        }
+    ],
+    "killSelection": "YOUNGEST_FIRST",
+    "maxLaunchDelaySeconds": 36000,
+    "requirePorts": false,
+    "upgradeStrategy": {
+        "maximumOverCapacity": 0,
+        "minimumHealthCapacity": 0
+    }
+}

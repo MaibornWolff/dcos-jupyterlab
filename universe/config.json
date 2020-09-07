@@ -1,0 +1,270 @@
+{
+  "type": "object",
+  "properties": {
+    "service": {
+      "type": "object",
+      "description": "DC/OS service configuration properties",
+      "properties": {
+        "name": {
+          "description": "The name of the service instance",
+          "type": "string",
+          "default": "jupyterlab",
+          "title": "Service name"
+        },
+        "user": {
+          "description": "The user that the service will run as. Only root and nobody are supported.",
+          "type": "string",
+          "default": "nobody",
+          "title": "User"
+        },
+        "role": {
+          "description": "The mesos role the service runs under. Spark uses this to start executors.",
+          "type": "string",
+          "default": "slave_public"
+        },
+        "service_account": {
+          "description": "The service account for DC/OS service authentication. This is typically left empty to use the default unless service authentication is needed. The value given here is passed as the principal of Mesos framework.",
+          "type": "string",
+          "default": ""
+        },
+        "service_account_secret": {
+          "description": "Name of the Secret Store credentials to use for DC/OS service authentication. This should be left empty unless service authentication is needed.",
+          "type": "string",
+          "default": "",
+          "title": "Credential secret name (optional)"
+        },
+        "virtual_network_enabled": {
+          "description": "Enable virtual networking",
+          "type": "boolean",
+          "default": true
+        },
+        "virtual_network_name": {
+          "description": "The name of the virtual network to join",
+          "type": "string",
+          "default": "dcos"
+        },
+        "placement_constraint": {
+          "title": "Placement constraint",
+          "description": "Placement constraints for nodes. Example: [[\"hostname\", \"UNIQUE\"]]",
+          "type": "array"
+        },
+        "cpus": {
+          "title": "CPU count",
+          "description": "jupyterlab pod CPU requirements",
+          "type": "number",
+          "default": 2
+        },
+        "mem": {
+          "title": "Memory size (MB)",
+          "description": "jupyterlab pod mem requirements (in MB)",
+          "type": "integer",
+          "default": 2048
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "local": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable local storage.",
+                  "default": false
+                },
+                "volume_size": {
+                  "description": "Size of the local volume to use",
+                  "type": "number",
+                  "default": 500
+                }
+              }
+            },
+            "host_path": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable host path.",
+                  "default": false
+                },
+                "path": {
+                  "description": "Path on the host to mount",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "enable_ssl": {
+          "type": "boolean",
+          "description": "Configure jupyter to expose its interface TLS secured",
+          "title": "Enable SSL",
+          "default": true
+        },
+        "base_url": {
+          "type": "string",
+          "description": "Base url to make jupyterlab available under. If marathon-lb is configured will be also be set for HAPROXY_0_PATH",
+          "title": "Application base url"
+        },
+        "marathonlb": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable marathon-lb config labels",
+              "default": false
+            },
+            "hostname": {
+              "type": "string",
+              "description": "The hostname to configure Marathon-LB with"
+            },
+            "redirect_to_https": {
+              "type": "boolean",
+              "description": "Make marathon-lb redirect all http requests to https, disable if you do not have marathon-lb configured for SSL",
+              "default": true
+            }
+          }
+        }
+      },
+      "required": [
+        "name",
+        "user",
+        "cpus",
+        "mem"
+      ]
+    },
+    "jupyterlab": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "title": "Password for jupyter",
+          "type": "string"
+        },
+        "spark": {
+          "type": "object",
+          "properties": {
+            "executor_memory": {
+              "description": "Memory to allocate to the Spark executors.",
+              "type": "string",
+              "default": "1024m"
+            },
+            "driver_memory": {
+              "description": "Memory to allocate to the Spark driver. Must be less than service.mem",
+              "type": "string",
+              "default": "512m"
+            },
+            "driver_cores": {
+              "description": "Cores to use for the spark driver process. Must not be more than service.cpus",
+              "type": "number",
+              "default": 1
+            },
+            "cores_max": {
+              "description": "Maximum number of cores to allocate to Spark.",
+              "type": "number",
+              "default": 2
+            },
+            "executor_cores": {
+              "description": "Maximum number of cores to allocate to the Spark executor.",
+              "type": "number",
+              "default": 1
+            },
+            "extra_options": {
+              "description": "Extra spark conf options to pass to spark. List of key=value pairs, space-separated",
+              "type": "string",
+              "default": ""
+            },
+            "driver_extra_java_options": {
+              "description": "Extra java options to pass to spark. Will be passed as value of spark.driver.extraJavaOptions",
+              "type": "string",
+              "default": ""
+            },
+            "executor_extra_java_options": {
+              "description": "Extra java options to pass to spark. Will be passed as value of spark.executor.extraJavaOptions",
+              "type": "string",
+              "default": ""
+            }
+          }
+        },
+        "s3": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable s3 support",
+              "default": false
+            },
+            "endpoint": {
+              "type": "string",
+              "description": "S3-Endpoint (needed if target is minio)"
+            },
+            "access_key": {
+              "type": "string",
+              "description": "S3 Access key"
+            },
+            "secret_key": {
+              "type": "string",
+              "description": "S3 secret key"
+            }
+          }
+        },
+        "hdfs": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable hdfs support.",
+              "default": false
+            },
+            "config_url": {
+              "description": "URL for the hdfs config.",
+              "type": "string"
+            }
+          }
+        },
+        "kerberos": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable kerberos support",
+              "default": false
+            },
+            "krb5conf_base64": {
+              "type": "string",
+              "description": "krb5.conf base64 encoded"
+            },
+            "principal": {
+              "type": "string",
+              "description": "kerberos principal for the keytab"
+            },
+            "keytab_secret": {
+              "type": "string",
+              "description": "Path to secret containing kerberos keytab"
+            }
+          }
+        },
+        "git": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable git repo cloning",
+              "default": false
+            },
+            "repo_url": {
+              "type": "string",
+              "description": "HTTP(s) url of a git repo to clone. Must contain credentials if needed to clone"
+            },
+            "user_name": {
+              "type": "string",
+              "description": "The name to configure for git to use when committing (git config --global user.name)"
+            },
+            "user_email": {
+              "type": "string",
+              "description": "The email to configure for git to use when committing (git config --global user.email)"
+            }
+          }
+        }
+      }
+    }
+  }
+}
