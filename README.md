@@ -1,3 +1,6 @@
+# END OF LIFE
+This project is not being maintained anymore.
+
 # Jupyterlab on DC/OS
 
 This project provides a docker image and a package to run [Jupyterlab](https://jupyter.org/) on [DC/OS](https://dcos.io).
